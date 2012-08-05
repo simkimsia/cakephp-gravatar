@@ -37,12 +37,6 @@ Component Usage
 ### In your controller:
 ```php
 <?php
-class UsersController extends AppController {
-/*
- * Componentes
- */
-
-
 class MyController extends AppController {
   public $components = array('Gravatar.Gravatar');
 ...
@@ -51,7 +45,6 @@ class MyController extends AppController {
 ### In some function:
 
 ```php
-//example in UserController
 <?php
 if($this->Gravatar->accountExists('email@example.com')) {
 	$this->Gravatar->download('email@example.com', '/webroot/img/users/avatar.jpg');
