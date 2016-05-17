@@ -21,14 +21,14 @@ class GravatarComponent extends Component {
 	 *
 	 * @var string
 	 */
-	private $base_url = 'http://www.gravatar.com/avatar/';
+	private $base_url = 'http://www.gravatar.com/';
 
 	/**
 	 * Secure gravatar url
 	 *
 	 * @var string
 	 */
-	private $base_url_ssl = 'https://secure.gravatar.com/avatar/';
+	private $base_url_ssl = 'https://secure.gravatar.com/';
 
 	/**
 	 * Secure / SSL flag
@@ -72,6 +72,8 @@ class GravatarComponent extends Component {
 	 * @var string
 	 */
 	private $hashType = 'md5';
+
+	public $profile = array();
 
 
 	/**
@@ -128,8 +130,8 @@ class GravatarComponent extends Component {
 	/**
 	 * Generate the image url
 	 *
-	 * @param string $email 
-	 * @param string $options 
+	 * @param string $email
+	 * @param string $options
 	 * @return image url of the gravatar
 	 * @author Chris Stevens
 	 */
@@ -143,10 +145,65 @@ class GravatarComponent extends Component {
 		}
 
 		if ($this->ssl) {
-			return $this->base_url_ssl.$this->hashEmail($email).$url_params;
+			return $this->base_url_ssl.'avatar/'.$this->hashEmail($email).$url_params;
 		}
 
-		return $this->base_url.$this->hashEmail($email).$url_params;
+		return $this->base_url.'avatar/'.$this->hashEmail($email).$url_params;
 	}
 
+	/**
+	 * Return success if gravatar exists
+	 *
+	 * @access public
+	 * @link http://en.gravatar.com/site/implement/profiles/php/
+	 */
+	public function accountExists($email, $loadProfile = true) {
+		$url = ($this->ssl? $this->base_url_ssl : $this->base_url);
+		$url .= $this->hashEmail($email) . ".php";
+		$str = @file_get_contents( $url );
+		$profile = @unserialize( $str );
+		if ( is_array( $profile ) && isset( $profile['entry'] ) ) {
+			if( $loadProfile ) {
+				$this->profile = $profile;
+			}
+			return true;
+			} else {
+				return false;
+		}
+	}//end function
+
+	function loadProfile($email) {
+		return $this->accountExists($email);
+	}//end function
+	/**
+	* Descripción de la función
+	*
+	* @param string $email
+	* @param string $fileDst
+	* @param string $options
+	* @return mixed number of bytes that were written to the file, or FALSE on failure.
+	* @access public
+	* @link [URL de mayor infor]
+	*/
+	public function download($email, $fileDst, $options=array()) {
+		$this->validateOptions($options);
+		$path = dirname(dirname(dirname(__FILE__)));
+		$path .= $fileDst;
+		if( !is_dir(dirname($path)) ) {
+			if( !@mkdir(dirname($path),0755, true)) {
+				return false;
+			}
+		}
+		$ch = curl_init();
+		if( $ch === false) {
+			return false;
+		}
+		$timeout = 5;
+		$url = $this->url($email, $options);
+		$ch = curl_init($url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$data = curl_exec($ch);
+		curl_close($ch);
+		return file_put_contents($path, $data);
+	}//end function
 }
